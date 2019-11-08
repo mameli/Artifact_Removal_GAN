@@ -39,7 +39,7 @@ path_fullRes = path/'images'
 path_lowRes = path/'lowRes-96'
 path_medRes = path/'lowRes-256'
 
-proj_id = 'unet_superRes_mobilenetV3'
+proj_id = 'unet_superRes_resnet34'
 
 gen_name = proj_id + '_gen'
 crit_name = proj_id + '_crit'
@@ -61,8 +61,8 @@ for p,size in sets:
         print(f"resizing to {size} into {p}")
         parallel(partial(create_training_images, p_hr=path_fullRes, p_lr=p, size=size), il.items)
 
-print("Creating unet with mobilenetv3")
-model = geffnet.mobilenetv3_100
+print("Creating unet with resnet34")
+model = models.resnet34
 
 # # 128px
 
@@ -71,7 +71,7 @@ sz=128
 lr = 1e-3
 wd = 1e-3
 keep_pct=1.0
-epochs = 10
+epochs = 1
 
 data_gen = get_data(bs=bs, sz=sz, keep_pct=keep_pct)
 
@@ -91,7 +91,7 @@ if wandbCallbacks:
             "weight_decay": wd,
             "num_epochs": epochs
     }
-    wandb.init(project='SuperRes', config=config, id="gen_mobilenetV3"+ datetime.now().strftime('_%m-%d_%H:%M'))
+    wandb.init(project='SuperRes', config=config, id="gen_resnet34"+ datetime.now().strftime('_%m-%d_%H:%M'))
 
     learn_gen.callback_fns.append(partial(WandbCallback, input_type='images'))
 
@@ -107,12 +107,7 @@ learn_gen.unfreeze()
 
 do_fit(learn_gen, epochs, gen_name+"_128px_1", slice(1e-5, lr))
 
-bs=10
 sz=256
-lr = 1e-3
-wd = 1e-3
-keep_pct=1.0
-epochs = 10
 
 data_gen = get_data(bs, sz, keep_pct=keep_pct)
 
