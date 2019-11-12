@@ -27,7 +27,6 @@ def create_training_images(fn, i, p_hr, p_lr, size):
     img = img.resize(targ_sz, resample=Image.BILINEAR).convert('RGB')
     img.save(dest, quality=60) 
 
-
 def do_fit(learn, epochs,save_name, lrs=slice(1e-3), pct_start=0.9):
     learn.fit_one_cycle(epochs, lrs, pct_start=pct_start)
     learn.save(save_name)
@@ -49,9 +48,7 @@ TENSORBOARD_PATH = Path('data/tensorboard/' + proj_id)
 nf_factor = 2
 pct_start = 1e-8
 
-
 print(path_fullRes)
-
 
 sets = [(path_lowRes, 96),(path_medRes, 256)]
 il = ImageList.from_folder(path_fullRes)
@@ -71,7 +68,7 @@ sz=128
 lr = 1e-3
 wd = 1e-3
 keep_pct=1.0
-epochs = 1
+epochs = 10
 
 data_gen = get_data(bs=bs, sz=sz, keep_pct=keep_pct)
 
