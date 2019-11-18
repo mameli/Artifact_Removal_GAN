@@ -124,7 +124,8 @@ def fid(input, target, dim=2048):
     block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[dim]
     model = InceptionV3([block_idx]).cuda()
     model.eval()
-
+    model.requires_grad_ = False
+    
     # m vector size dims 
     # s matrix size dims x dims
     m1, s1 = calculate_activation_statistics(input, model, dim)

@@ -65,7 +65,7 @@ data_gen = det_DIV2k_data(bs=bs, sz=sz)
 # data_gen.show_batch(ds_type=DatasetType.Valid, rows=1, figsize=(9,9))
 
 # loss_func = FeatureLoss()
-loss_func = pytorch_msssim.ssim
+loss_func = msssim
 # loss_func = calculate_frechet_distance
 
 learn_gen = gen_learner_wide(data=data_gen,
@@ -73,7 +73,7 @@ learn_gen = gen_learner_wide(data=data_gen,
                              arch = model,
                              nf_factor=nf_factor)
 
-wandbCallbacks = False
+wandbCallbacks = True
 
 if wandbCallbacks:
     import wandb
@@ -100,7 +100,7 @@ do_fit(learn_gen, 3, gen_name+"_256px_1", slice(lr))
 # # 512px
 bs=4
 sz=512
-epochs = 5
+epochs = 3
 
 data_gen = det_DIV2k_data(bs, sz)
 
@@ -110,16 +110,16 @@ gc.collect()
 
 learn_gen.load(gen_name+"_256px_1")
 
-learn_gen.lr_find()
-learn_gen.recorder.plot()
+# learn_gen.lr_find()
+# learn_gen.recorder.plot()
 
 print("Upsize to gen_512")
 
-do_fit(learn_gen, epochs, gen_name+"_512px_0",slice(1e-6))
+do_fit(learn_gen, 3, gen_name+"_512px_0",slice(1e-7))
 
 learn_gen.unfreeze()
 
-do_fit(learn_gen, 1, gen_name+"_512px_1", slice(lr))
+do_fit(learn_gen, 3, gen_name+"_512px_1",slice(1e-7))
 
 learn_gen = None
 gc.collect()

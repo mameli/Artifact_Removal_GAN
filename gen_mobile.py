@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 from fastai import *
 from fastai.vision import *
@@ -8,9 +8,13 @@ from superRes.critics import *
 from superRes.dataset import *
 from superRes.loss import *
 from superRes.save import *
+from superRes.fid_loss import *
 from superRes.ssim import *
 from PIL import Image, ImageDraw, ImageFont
 from PIL import ImageFile
+from pathlib import Path
+
+import geffnet # efficient/ mobile net
 from datetime import datetime
 
 import geffnet # efficient/ mobile net
@@ -47,7 +51,7 @@ def create_training_images(fn, i, p_hr, p_lr, size):
 def do_fit(learn, epochs,save_name, lrs=slice(1e-3), pct_start=0.9):
     learn.fit_one_cycle(epochs, lrs, pct_start=pct_start)
     learn.save(save_name)
-    learn.show_results(rows=1, imgsize=5)
+    learn.show_results(rows=1, imgsize=7)
 
 path = Path('./dataset/')
 
@@ -67,24 +71,25 @@ print("Dataset " + path_fullRes)
 print("Creating unet with mobilenetv3")
 model = geffnet.mobilenetv3_100
 
-# # 128px
+# # 256px
 
-bs=20
-sz=128
-lr = 1e-3
-epochs = 10
+bs=10
+sz=256
+lr = 1e-2
+wd = 1e-3
+epochs = 5
 
 data_gen = det_DIV2k_data(bs=bs, sz=sz)
 
 print("Using SSIM Loss")
-loss_func = pytorch_ssim.SSIM(window_size = 11)
+loss_func = msssim
 
 learn_gen = gen_learner_wide(data=data_gen,
                              gen_loss=loss_func,
                              arch = model,
                              nf_factor=nf_factor)
 
-wandbCallbacks = False
+wandbCallbacks = True
 
 if wandbCallbacks:
     import wandb
@@ -100,31 +105,31 @@ if wandbCallbacks:
     learn_gen.callback_fns.append(partial(WandbCallback, input_type='images'))
 
 print("Fitting with " + gen_name)
-do_fit(learn_gen, epochs, gen_name+"_128px_0", slice(lr*10))
+do_fit(learn_gen, epochs, gen_name+"_256px_0", slice(lr*10))
 
 print("Unfreeze model")
 learn_gen.unfreeze()
 
-do_fit(learn_gen, epochs, gen_name+"_128px_1", slice(1e-5, lr))
+do_fit(learn_gen, 3, gen_name+"_256px_1", slice(lr))
 
-bs=10
-sz=256
-epochs = 10
+bs=4
+sz=512
+epochs = 5
 
-data_gen = det_DIV2k_data(bs=bs, sz=sz)
+data_gen = det_DIV2k_data(bs, sz)
 
 learn_gen.data = data_gen
 learn_gen.freeze()
 gc.collect()
 
-learn_gen.load(gen_name+"_128px_1")
+learn_gen.load(gen_name+"_256px_1")
 
 print("Upsize to gen_256_" + datetime.now().strftime('_%m-%d_%H:%M'))
-do_fit(learn_gen, epochs, gen_name+"_256px_0")
+do_fit(learn_gen, epochs, gen_name+"_512px_0")
 
 learn_gen.unfreeze()
 
-do_fit(learn_gen, epochs, gen_name+"_256px_1", slice(1e-6,1e-4), pct_start=0.3)
+do_fit(learn_gen, epochs, gen_name+"_512px_1", slice(1e-6,1e-4), pct_start=0.3)
 
 learn_gen = None
 gc.collect()
