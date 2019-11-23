@@ -133,11 +133,11 @@ loss_func = msssim
 # # 64px patch
 
 # %%
-bs=234
+bs=150
 sz=64
 lr = 1e-3
 wd = 1e-3
-epochs = 3
+epochs = 2
 
 
 # %%
@@ -213,6 +213,6 @@ learn_gen.recorder.plot()
 # %%
 print("Upsize to gen_512")
 
-do_fit(learn_gen, 3, gen_name+"_512px_0",slice(1e-5))
+do_fit(learn_gen, 1, gen_name+"_512px_0",slice(1e-5))
 
 

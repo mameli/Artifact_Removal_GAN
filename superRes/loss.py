@@ -1,6 +1,4 @@
-from fastai import *
-from fastai.core import *
-from fastai.torch_core import *
+from fastai.torch_core import requires_grad, children, torch, nn, F
 from fastai.callbacks import hook_outputs
 import torchvision.models as models
 
@@ -20,7 +18,8 @@ class FeatureLoss(nn.Module):
         self.loss_features = [self.m_feat[i] for i in layer_ids]
         self.hooks = hook_outputs(self.loss_features, detach=False)
         self.wgts = layer_wgts
-        self.metric_names = ['pixel'] + [f'feat_{i}' for i in range(len(layer_ids))]
+        self.metric_names = ['pixel'] + \
+            [f'feat_{i}' for i in range(len(layer_ids))]
         self.base_loss = F.l1_loss
 
     def _make_features(self, x, clone=False):
@@ -76,7 +75,8 @@ class WassFeatureLoss(nn.Module):
         n = tensor.shape[2]
         mu = tensor.mean(2)
         tensor = (tensor - mu[:, :, None]).squeeze(0)
-        # Prevents nasty bug that happens very occassionally- divide by zero.  Why such things happen?
+        # Prevents nasty bug that happens very occassionally- divide by zero.
+        # Why such things happen?
         if n == 0:
             return None, None
         cov = torch.mm(tensor, tensor.t()) / float(n)
@@ -95,7 +95,8 @@ class WassFeatureLoss(nn.Module):
     def _calc_l2wass_dist(
         self, mean_stl, tr_cov_stl, root_cov_stl, mean_synth, cov_synth
     ):
-        tr_cov_synth = torch.symeig(cov_synth, eigenvectors=True)[0].clamp(min=0).sum()
+        tr_cov_synth = torch.symeig(cov_synth, eigenvectors=True)[
+            0].clamp(min=0).sum()
         mean_diff_squared = (mean_stl - mean_synth).pow(2).sum()
         cov_prod = torch.mm(torch.mm(root_cov_stl, cov_synth), root_cov_stl)
         var_overlap = torch.sqrt(

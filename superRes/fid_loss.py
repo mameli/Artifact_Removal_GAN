@@ -1,14 +1,11 @@
-import os
-
 import torch
 import numpy as np
 import scipy.linalg
-from fastai import *
-from fastai.core import *
-from fastai.torch_core import *
 from torch.autograd import Function
-
+import torch.nn.functional as F
 from .inception import InceptionV3
+from .ssim import msssim
+
 
 class MatrixSquareRoot(Function):
     """Square root of a positive definite matrix.
@@ -39,8 +36,10 @@ class MatrixSquareRoot(Function):
 
             grad_input = torch.from_numpy(grad_sqrtm).type_as(grad_output.data)
         return grad_input
-    
+
+
 sqrtm = MatrixSquareRoot.apply
+
 
 def get_activations(imgs, model, dim=2048):
     """Calculates the activations of the pool_3 layer for all images.
@@ -49,7 +48,7 @@ def get_activations(imgs, model, dim=2048):
     -- imgs        : Tensor of images
     -- model       : Instance of inception model
     -- dims        : Dimensionality of features returned by Inception
-    
+
     Returns:
     -- A pytorch tensor of dimension (num images, dims) that contains the
        activations of the given tensor when feeding inception with the
@@ -61,7 +60,7 @@ def get_activations(imgs, model, dim=2048):
     imgs = imgs.cuda()
 
     pred = model(imgs)[0]
-    
+
     pred_arr = pred.data.view(n_imgs, -1)
 
     return pred_arr
@@ -91,10 +90,11 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2):
     diff = mu1 - mu2
 
     covmean = sqrtm(torch.mm(sigma1, sigma2))
-    
+
     tr_covmean = torch.trace(covmean)
 
-    fid = (torch.dot(diff, diff) + torch.trace(sigma1) + torch.trace(sigma2) - 2 * tr_covmean)
+    fid = (torch.dot(diff, diff) + torch.trace(sigma1) +
+           torch.trace(sigma2) - 2 * tr_covmean)
     fid.requires_grad = True
     return fid
 
@@ -106,16 +106,16 @@ def calculate_activation_statistics(img_tensor, model,
     -- img_tensor  : Pytorch tensor of images
     -- model       : Instance of inception model
     -- dims        : Dimensionality of features returned by Inception
-    
+
     Returns:
     -- mu    : The mean over samples of the activations of the pool_3 layer of
                the inception model.
     -- sigma : The covariance matrix of the activations of the pool_3 layer of
                the inception model.
-    """                                
+    """
     act = get_activations(img_tensor, model, dim)
     mu = act.mean(dim=0)
-    sigma = torch.tensor(np.cov(act, rowvar=False))   
+    sigma = torch.tensor(np.cov(act, rowvar=False))
     return mu, sigma
 
 
@@ -125,19 +125,18 @@ def fid(input, target, dim=2048):
     model = InceptionV3([block_idx]).cuda()
     model.eval()
     model.requires_grad_ = False
-    
-    # m vector size dims 
+
+    lamb = 2e-3
+
+    # m vector size dims
     # s matrix size dims x dims
     m1, s1 = calculate_activation_statistics(input, model, dim)
     m2, s2 = calculate_activation_statistics(target, model, dim)
-    
+
     fid_value = calculate_frechet_distance(m1, s1, m2, s2)
 
-    return fid_value
-
-class FIDLoss(nn.Module):
-    def __init__(self):
-        super(FIDLoss, self).__init__()
-
-    def forward(self, input, target):
-        return fid(input, target)
+    base_loss = F.mse_loss(input, target).cuda()
+    ms = msssim(input, target).cuda()
+    # print("Valore di fid " + str(lamb * fid_value))
+    # print("Valore di mse " + str(base_loss))
+    return (lamb * fid_value).float() + ms.float() + base_loss.float()
