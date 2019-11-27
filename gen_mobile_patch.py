@@ -51,15 +51,9 @@ def get_DIV2k_data_patches(pLow, bs:int, sz:int):
     """Given the path of low resolution images with a proper suffix
        returns a databunch
     """
-    src = ImageImageList.from_folder(pLow).split_by_idxs(train_idx=list(range(0,564736)), valid_idx=list(range(564736,637408)))
-    
-    data = (src.label_from_func(lambda x: path_fullRes_patches/x.name).transform(
-            get_transforms(
-                max_zoom=3.
-            ),
-            size=sz,
-            tfm_y=True,
-        ).databunch(bs=bs, num_workers=8, no_check=True).normalize(imagenet_stats, do_y=True))
+    src = ImageImageList.from_folder(pLow).split_by_rand_pct(valid_pct=.1)
+    data = (src.label_from_func(lambda x: path_fullRes_patches/x.name)
+            .databunch(bs=bs, num_workers=8, no_check=True).normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
 
@@ -119,7 +113,7 @@ print(path_fullRes_patches)
 
 
 # %%
-model = geffnet.mobilenetv3_100
+model = geffnet.mobilenetv3_rw
 # model = models.resnet34
 # model= geffnet.efficientnet_b4
 
@@ -142,10 +136,6 @@ epochs = 2
 
 # %%
 data_gen = get_DIV2k_data_patches(path_lowRes_patches, bs=bs, sz=sz)
-
-
-# %%
-data_gen.show_batch()
 
 
 # %%
@@ -180,15 +170,18 @@ if wandbCallbacks:
 
 
 # %%
-do_fit(learn_gen, epochs, gen_name+"_64px_0", slice(lr))
+do_fit(learn_gen, 1, gen_name+"_64px_0", 1e-2)
 
+learn_gen.unfreeze()
+
+do_fit(learn_gen, 3, gen_name+"_64px_1", 1e-3)
 # %% [markdown]
 # # 512px 
 
 # %%
 bs=4
 sz=512
-epochs = 5
+epochs = 3
 
 
 # %%
@@ -197,22 +190,23 @@ data_gen = get_DIV2k_data(path_lowRes_mild, bs, sz)
 
 # %%
 learn_gen.data = data_gen
+learn_gen.metrics.append(SSIM_Metric())
 learn_gen.freeze()
 gc.collect()
 
 
 # %%
-learn_gen.load(gen_name+"_64px_0")
+# learn_gen.load(gen_name+"_64px_0")
 
 
 # %%
-learn_gen.lr_find()
-learn_gen.recorder.plot()
+# learn_gen.lr_find()
+# learn_gen.recorder.plot()
 
 
 # %%
 print("Upsize to gen_512")
 
-do_fit(learn_gen, 1, gen_name+"_512px_0",slice(1e-5))
+do_fit(learn_gen, 3, gen_name+"_512px_0", slice(1e-3))
 
 

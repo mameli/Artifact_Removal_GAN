@@ -1,6 +1,0 @@
-{
-    "python.pythonPath": "/data/students_home/fmameli/anaconda3/envs/fastai/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true
-}

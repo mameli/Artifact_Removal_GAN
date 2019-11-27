@@ -115,7 +115,7 @@ def calculate_activation_statistics(img_tensor, model,
     """
     act = get_activations(img_tensor, model, dim)
     mu = act.mean(dim=0)
-    sigma = torch.tensor(np.cov(act, rowvar=False))
+    sigma = torch.tensor(np.cov(act.cpu().numpy(), rowvar=False))
     return mu, sigma
 
 
@@ -126,8 +126,8 @@ def fid(input, target, dim=2048):
     model.eval()
     model.requires_grad_ = False
 
-    lamb = 2e-3
-
+    lambda1 = 1e-3
+    lambda2 = 2e-1
     # m vector size dims
     # s matrix size dims x dims
     m1, s1 = calculate_activation_statistics(input, model, dim)
@@ -137,6 +137,5 @@ def fid(input, target, dim=2048):
 
     base_loss = F.mse_loss(input, target).cuda()
     ms = msssim(input, target).cuda()
-    # print("Valore di fid " + str(lamb * fid_value))
-    # print("Valore di mse " + str(base_loss))
-    return (lamb * fid_value).float() + ms.float() + base_loss.float()
+    # print("Valore di fid " + str(lambda1 * fid_value) + " Valore di mse " + str(lambda2 * base_loss))
+    return (lambda1 * fid_value).float() + ms.float() + (lambda2 * base_loss).float()

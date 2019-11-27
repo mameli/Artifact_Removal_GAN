@@ -1,18 +1,22 @@
 import torch
 import torch.nn.functional as F
+from fastai.torch_core import add_metrics
+from fastai.callback import Callback
 from math import exp
-import numpy as np
 
 
 def gaussian(window_size, sigma):
-    gauss = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])
+    gauss = torch.Tensor(
+        [exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])
     return gauss/gauss.sum()
 
 
 def create_window(window_size, channel=1):
     _1D_window = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
-    window = _2D_window.expand(channel, 1, window_size, window_size).contiguous()
+    _2D_window = _1D_window.mm(
+        _1D_window.t()).float().unsqueeze(0).unsqueeze(0)
+    window = _2D_window.expand(
+        channel, 1, window_size, window_size).contiguous()
     return window
 
 
@@ -45,9 +49,12 @@ def ssim(img1, img2, window_size=11, window=None, size_average=True, full=False,
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
 
-    sigma1_sq = F.conv2d(img1 * img1, window, padding=padd, groups=channel) - mu1_sq
-    sigma2_sq = F.conv2d(img2 * img2, window, padding=padd, groups=channel) - mu2_sq
-    sigma12 = F.conv2d(img1 * img2, window, padding=padd, groups=channel) - mu1_mu2
+    sigma1_sq = F.conv2d(img1 * img1, window, padding=padd,
+                         groups=channel) - mu1_sq
+    sigma2_sq = F.conv2d(img2 * img2, window, padding=padd,
+                         groups=channel) - mu2_sq
+    sigma12 = F.conv2d(img1 * img2, window, padding=padd,
+                       groups=channel) - mu1_mu2
 
     C1 = (0.01 * L) ** 2
     C2 = (0.03 * L) ** 2
@@ -70,12 +77,14 @@ def ssim(img1, img2, window_size=11, window=None, size_average=True, full=False,
 
 def msssim(img1, img2, window_size=11, size_average=True, val_range=None, normalize=True):
     device = img1.device
-    weights = torch.FloatTensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).to(device)
+    weights = torch.FloatTensor(
+        [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).to(device)
     levels = weights.size()[0]
     mssim = []
     mcs = []
     for _ in range(levels):
-        sim, cs = ssim(img1, img2, window_size=window_size, size_average=size_average, full=True, val_range=val_range)
+        sim, cs = ssim(img1, img2, window_size=window_size,
+                       size_average=size_average, full=True, val_range=val_range)
         mssim.append(sim)
         mcs.append(cs)
 
@@ -94,7 +103,7 @@ def msssim(img1, img2, window_size=11, size_average=True, val_range=None, normal
     pow2 = mssim ** weights
     # From Matlab implementation https://ece.uwaterloo.ca/~z70wang/research/iwssim/
     output = torch.prod(pow1[:-1] * pow2[-1])
-    return  1-output
+    return 1-output
 
 
 # Classes to re-use window
@@ -115,11 +124,13 @@ class SSIM(torch.nn.Module):
         if channel == self.channel and self.window.dtype == img1.dtype:
             window = self.window
         else:
-            window = create_window(self.window_size, channel).to(img1.device).type(img1.dtype)
+            window = create_window(self.window_size, channel).to(
+                img1.device).type(img1.dtype)
             self.window = window
             self.channel = channel
 
         return ssim(img1, img2, window=window, window_size=self.window_size, size_average=self.size_average)
+
 
 class MSSSIM(torch.nn.Module):
     def __init__(self, window_size=11, size_average=True, channel=3):
@@ -130,5 +141,21 @@ class MSSSIM(torch.nn.Module):
 
     def forward(self, img1, img2):
         # TODO: store window between calls if possible
-        m = msssim(img1, img2, window_size=self.window_size, size_average=self.size_average)
+        m = msssim(img1, img2, window_size=self.window_size,
+                   size_average=self.size_average)
         return m
+
+
+class SSIM_Metric(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "ssim"
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_end(self, last_output, last_target, **kwargs):
+        self.values.append(ssim(last_output, last_target))
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        return add_metrics(last_metrics, sum(self.values) / len(self.values))
