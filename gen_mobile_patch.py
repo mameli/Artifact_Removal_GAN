@@ -17,11 +17,6 @@ import geffnet # efficient/ mobile net
 
 
 # %%
-def get_data(bs:int, sz:int, keep_pct:float):
-    return get_databunch(sz=sz, bs=bs, crappy_path=path_lowRes, 
-                         good_path=path_fullRes, 
-                         random_seed=None, keep_pct=keep_pct)
-
 def get_DIV2k_data(pLow, bs:int, sz:int):
     """Given the path of low resolution images with a proper suffix
        returns a databunch
