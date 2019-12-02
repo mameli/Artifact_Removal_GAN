@@ -4,7 +4,7 @@ import scipy.linalg
 from torch.autograd import Function
 import torch.nn.functional as F
 from .inception import InceptionV3
-from .ssim import msssim
+# from .ssim import msssim
 
 
 class MatrixSquareRoot(Function):
@@ -135,7 +135,9 @@ def fid(input, target, dim=2048):
 
     fid_value = calculate_frechet_distance(m1, s1, m2, s2)
 
-    base_loss = F.mse_loss(input, target).cuda()
-    ms = msssim(input, target).cuda()
-    # print("Valore di fid " + str(lambda1 * fid_value) + " Valore di mse " + str(lambda2 * base_loss))
-    return (lambda1 * fid_value).float() + ms.float() + (lambda2 * base_loss).float()
+    base_loss = F.l1_loss(input, target).cuda()
+    # ms = msssim(input, target).cuda()
+    print("Valore di fid " + str(lambda1 * fid_value))
+    print("Valore di mse " + str(lambda2 * base_loss))
+
+    return (lambda1 * fid_value).float() + (lambda2 * base_loss).float()
