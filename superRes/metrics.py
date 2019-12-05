@@ -7,25 +7,46 @@ from .ssim import ssim
 import perceptual_similarity as lpips
 
 
-class SSIM_Metric(Callback):
+class SSIM_Metric_gen(Callback):
     def __init__(self):
         super().__init__()
-        self.name = "ssim"
+        self.name = "ssim_gen"
 
     def on_epoch_begin(self, **kwargs):
         self.values = []
 
     def on_batch_end(self, last_output, last_target, **kwargs):
-        self.values.append(ssim(last_output, last_target))
+        self.values.append(1 - ssim(last_output, last_target))
 
     def on_epoch_end(self, last_metrics, **kwargs):
         return add_metrics(last_metrics, sum(self.values) / len(self.values))
 
 
-class LPIPS_Metric(Callback):
+class SSIM_Metric_input(Callback):
     def __init__(self):
         super().__init__()
-        self.name = "lpips"
+        self.name = "ssim_in"
+        self.first_run = True
+        self.final_score = 0.
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            self.values.append(1 - ssim(last_input, last_target))
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        return add_metrics(last_metrics, self.final_score)
+
+
+class LPIPS_Metric_gen(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "lpips_gen"
         self.model = lpips.PerceptualLoss(
             model='net-lin', net='alex', use_gpu=True, gpu_ids=[0])
 
@@ -40,10 +61,35 @@ class LPIPS_Metric(Callback):
         return add_metrics(last_metrics, sum(self.values) / len(self.values))
 
 
-class BRISQUE_Metric(Callback):
+class LPIPS_Metric_input(Callback):
     def __init__(self):
         super().__init__()
-        self.name = "brisque"
+        self.name = "lpips_in"
+        self.first_run = True
+        self.final_score = 0.
+        self.model = lpips.PerceptualLoss(
+            model='net-lin', net='alex', use_gpu=True, gpu_ids=[0])
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            lpips_value = self.model.forward(last_input, last_target)
+            self.values.append(lpips_value.mean())
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        self.model = None
+        return add_metrics(last_metrics, self.final_score)
+
+
+class BRISQUE_Metric_gen(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "brisque_gen"
         self.brisque = BRISQUE()
 
     def on_epoch_begin(self, **kwargs):
@@ -58,10 +104,60 @@ class BRISQUE_Metric(Callback):
         return add_metrics(last_metrics, sum(self.values) / len(self.values))
 
 
-class NIQE_Metric(Callback):
+class BRISQUE_Metric_input(Callback):
     def __init__(self):
         super().__init__()
-        self.name = "niqe"
+        self.name = "brisque_in"
+        self.brisque = BRISQUE()
+        self.first_run = True
+        self.final_score = 0.
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            for img in last_input:
+                score = self.brisque.get_score(
+                    img.permute(1, 2, 0).cpu().numpy())
+                self.values.append(score)
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        return add_metrics(last_metrics, self.final_score)
+
+
+class BRISQUE_Metric_target(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "brisque_tar"
+        self.brisque = BRISQUE()
+        self.first_run = True
+        self.final_score = 0.
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            for img in last_target:
+                score = self.brisque.get_score(
+                    img.permute(1, 2, 0).cpu().numpy())
+                self.values.append(score)
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        return add_metrics(last_metrics, self.final_score)
+
+
+class NIQE_Metric_gen(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "niqe_gen"
 
     def on_epoch_begin(self, **kwargs):
         self.values = []
@@ -73,3 +169,49 @@ class NIQE_Metric(Callback):
 
     def on_epoch_end(self, last_metrics, **kwargs):
         return add_metrics(last_metrics, sum(self.values) / len(self.values))
+
+
+class NIQE_Metric_input(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "niqe_in"
+        self.first_run = True
+        self.final_score = 0.
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            for img in last_input:
+                score = niqe(img[0].cpu().numpy())
+                self.values.append(score)
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        return add_metrics(last_metrics, self.final_score)
+
+
+class NIQE_Metric_target(Callback):
+    def __init__(self):
+        super().__init__()
+        self.name = "niqe_tar"
+        self.first_run = True
+        self.final_score = 0.
+
+    def on_epoch_begin(self, **kwargs):
+        self.values = []
+
+    def on_batch_begin(self, last_input, last_target, **kwargs):
+        if self.first_run:
+            for img in last_target:
+                score = niqe(img[0].cpu().numpy())
+                self.values.append(score)
+
+    def on_epoch_end(self, last_metrics, **kwargs):
+        if self.first_run:
+            self.final_score = sum(self.values) / len(self.values)
+        self.first_run = False
+        return add_metrics(last_metrics, self.final_score)

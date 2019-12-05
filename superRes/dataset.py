@@ -1,6 +1,7 @@
 from fastai.vision.transform import get_transforms
 from fastai.vision.data import ImageDataBunch, ImageImageList, imagenet_stats
-from fastai.vision.data import resize_to
+from fastai.vision.data import resize_to, ImageList
+from fastai.core import partial, parallel
 from pathlib import Path
 import PIL
 
@@ -56,19 +57,19 @@ def get_DIV2k_data(pLow, pFull, bs: int, sz: int):
         train_idx=list(range(0, 800)), valid_idx=list(range(800, 900)))
 
     data = (src.label_from_func(
-                lambda x: pFull/(x.name).replace(lowResSuffix, '')
-            ).transform(
-            get_transforms(
-                max_rotate=30,
-                max_zoom=3.,
-                max_lighting=.4,
-                max_warp=.4,
-                p_affine=.85
-            ),
-            size=sz,
-            tfm_y=True,
-            ).databunch(bs=bs, num_workers=8, no_check=True)
-             .normalize(imagenet_stats, do_y=True))
+        lambda x: pFull/(x.name).replace(lowResSuffix, '')
+    ).transform(
+        get_transforms(
+            max_rotate=30,
+            max_zoom=3.,
+            max_lighting=.4,
+            max_warp=.4,
+            p_affine=.85
+        ),
+        size=sz,
+        tfm_y=True,
+    ).databunch(bs=bs, num_workers=8, no_check=True)
+        .normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
 
@@ -81,24 +82,40 @@ def get_DIV2k_data_QF(pLow, pFull, bs: int, sz: int):
         train_idx=list(range(0, 800)), valid_idx=list(range(800, 900)))
 
     data = (src.label_from_func(
-                lambda x: pFull/(x.name.replace(".jpg", ".png"))
-            ).transform(
-            get_transforms(
-                max_zoom=2.
-            ),
-            size=sz,
-            tfm_y=True,
-            ).databunch(bs=bs, num_workers=8, no_check=True)
-             .normalize(imagenet_stats, do_y=True))
+        lambda x: pFull/(x.name.replace(".jpg", ".png"))
+    ).transform(
+        get_transforms(
+            max_zoom=2.
+        ),
+        size=sz,
+        tfm_y=True,
+    ).databunch(bs=bs, num_workers=8, no_check=True)
+        .normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
 
 
-def create_training_images(fn, i, p_hr, p_lr, size, qualityFactor):
+def create_training_images(fn, i, p_hr, p_lr, size, qualityFactor, downsize=True):
     """Create low quality images from folder p_hr in p_lr"""
     dest = p_lr/fn.relative_to(p_hr)
     dest.parent.mkdir(parents=True, exist_ok=True)
     img = PIL.Image.open(fn)
-    targ_sz = resize_to(img, size, use_min=True)  # W x H
-    img = img.resize(targ_sz, resample=PIL.Image.BILINEAR).convert('RGB')
+    if downsize:
+        targ_sz = resize_to(img, size, use_min=True)  # W x H
+        img = img.resize(targ_sz, resample=PIL.Image.BILINEAR).convert('RGB')
     img.save(dest.with_suffix(".jpg"), "JPEG", quality=qualityFactor)
+
+
+def create_dataset(path_fullRes: Path, path_list, downsize=True):
+    il = ImageList.from_folder(path_fullRes)
+
+    for p, size, qf in path_list:
+        if not p.exists():
+            print(f"Creating {p}")
+            print(f"Size: {size} with {qf} quality factor")
+            parallel(partial(create_training_images,
+                             p_hr=path_fullRes,
+                             p_lr=p,
+                             size=size,
+                             qualityFactor=qf,
+                             downsize=downsize), il.items)
