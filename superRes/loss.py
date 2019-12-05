@@ -1,7 +1,19 @@
 from fastai.torch_core import requires_grad, children, torch, nn, F
 from fastai.callbacks import hook_outputs
 import torchvision.models as models
+import perceptual_similarity as lpips
 
+
+class lpips_loss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = lpips.PerceptualLoss(
+            model='net-lin', net='vgg', use_gpu=True)
+        self.base_loss = F.l1_loss
+
+    def forward(self, input, target):
+        self.losses = self.model.forward(input, target)
+        return self.losses.sum()
 
 
 class FeatureLoss(nn.Module):
