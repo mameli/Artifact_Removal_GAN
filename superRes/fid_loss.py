@@ -127,7 +127,6 @@ def fid(input, target, dim=2048):
     model.requires_grad_ = False
 
     lambda1 = 1e-3
-    lambda2 = 1e-1
     # m vector size dims
     # s matrix size dims x dims
     m1, s1 = calculate_activation_statistics(input, model, dim)
@@ -140,4 +139,4 @@ def fid(input, target, dim=2048):
     # print("Valore di fid " + str(lambda1 * fid_value))
     # print("Valore di mse " + str(lambda2 * base_loss))
 
-    return (lambda1 * fid_value).float() + (lambda2 * base_loss).float()
+    return (lambda1 * fid_value).float() + (base_loss).float()

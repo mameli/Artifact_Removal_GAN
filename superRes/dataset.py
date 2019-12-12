@@ -53,7 +53,7 @@ def get_DIV2k_data(pLow, pFull, bs: int, sz: int):
                 "dataset/DIV2K_train_LR_difficult": "x4d",
                 "dataset/DIV2K_train_LR_mild": "x4m"}
     lowResSuffix = suffixes[str(pLow)]
-    src = ImageImageList.from_folder(pLow).split_by_idxs(
+    src = ImageImageList.from_folder(pLow, presort=True).split_by_idxs(
         train_idx=list(range(0, 800)), valid_idx=list(range(800, 900)))
 
     data = (src.label_from_func(
@@ -78,7 +78,7 @@ def get_DIV2k_data_QF(pLow, pFull, bs: int, sz: int):
     """Given the path of low resolution images
        returns a databunch
     """
-    src = ImageImageList.from_folder(pLow).split_by_idxs(
+    src = ImageImageList.from_folder(pLow, presort=True).split_by_idxs(
         train_idx=list(range(0, 800)), valid_idx=list(range(800, 900)))
 
     data = (src.label_from_func(

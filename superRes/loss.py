@@ -13,6 +13,7 @@ class lpips_loss(nn.Module):
 
     def forward(self, input, target):
         self.losses = self.model.forward(input, target)
+        self.losses += self.base_loss(input, target)
         return self.losses.sum()
 
 
