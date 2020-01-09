@@ -18,7 +18,7 @@ path_lowRes_Full = path/'DIV2K_train_LR_Full_QF20'
 
 
 def get_patches(tensor):
-    pw, ph = 32, 32
+    pw, ph = 64, 64
     nc, w, h = tensor.shape
     padW = pw - w % pw
     padH = ph - h % ph
@@ -30,15 +30,26 @@ def get_patches(tensor):
 high_res = ImageList.from_folder(path_fullRes, presort=True)
 low_res = ImageList.from_folder(path_lowRes_Full, presort=True)
 
-destHR = path/"DIV2K_train_HR_Patches"/"32px_FullQF20"
+destHR = path/"DIV2K_train_HR_Patches"/"64px_FullQF20"
 destHR.mkdir(parents=True, exist_ok=True)
 
-destLR = path/"DIV2K_train_LR_Patches"/"32px_FullQF20"
+destLR = path/"DIV2K_train_LR_Patches"/"64px_FullQF20"
 destLR.mkdir(parents=True, exist_ok=True)
+
+for index, img in enumerate(high_res):
+    file_name = str(index+1).zfill(3)
+    print("Creating file: High res " + file_name)
+    patches = get_patches(img.data)[0]
+    row, col = patches.shape[:2]
+    for i in range(row):
+        for j in range(col):
+            tempImg = Image(patches[i][j])
+            fn = file_name + f'_patch_{i}_{j}.png'
+            tempImg.save(destHR/fn)
 
 for index, img in enumerate(low_res):
     file_name = str(index+1).zfill(3)
-    print("Creating file: " + file_name)
+    print("Creating file: Low res " + file_name)
     resizedImg = img.resize(high_res[index].shape).clone()
     patches = get_patches(resizedImg.data)[0]
     row, col = patches.shape[:2]
