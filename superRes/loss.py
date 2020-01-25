@@ -8,13 +8,13 @@ class lpips_loss(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = lpips.PerceptualLoss(
-            model='net-lin', net='vgg', use_gpu=True)
-        self.base_loss = F.l1_loss
+            model='net-lin', net='alex', use_gpu=True)
+        self.base_loss = nn.L1Loss()
 
     def forward(self, input, target):
-        self.losses = self.model.forward(input, target)
+        self.losses = self.model.forward(input, target, normalize=True)
         self.losses += self.base_loss(input, target)
-        return self.losses.sum()
+        return self.losses.mean()
 
 
 class FeatureLoss(nn.Module):
