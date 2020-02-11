@@ -24,7 +24,7 @@ def get_DIV2k_data_patches(pLow, bs: int):
     src = ImageImageList.from_folder(pLow, presort=True).split_by_idxs(
         train_idx=list(range(0, 565407)), valid_idx=list(range(565408, 637408)))
     data = (src.label_from_func(lambda x: path_fullRes_patches/x.name)
-            .databunch(bs=bs, num_workers=8, no_check=True).normalize(imagenet_stats, do_y=True))
+            .databunch(bs=bs, num_workers=2, no_check=True).normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
 
@@ -45,7 +45,7 @@ path_lowRes_256 = path/'DIV2K_train_LR_256_QF20'
 path_lowRes_512 = path/'DIV2K_train_LR_512_QF20'
 path_lowRes_Full = path/'DIV2K_train_LR_Full_QF20'
 
-proj_id = 'unet_wideNf2_superRes_mobilenetV3_P64px_Alex'
+proj_id = 'unet_wideNf2_superRes_mobilenetV3_P64px_VGG'
 
 gen_name = proj_id + '_gen'
 crit_name = proj_id + '_crit'
@@ -96,12 +96,12 @@ if wandbCallbacks:
 
     learn_gen.callback_fns.append(partial(WandbCallback, input_type='images'))
 
-print(learn_gen.summary())
+# print(learn_gen.summary())
 
 do_fit(learn_gen, 5, gen_name+"_0", slice(1e-2))
-do_fit(learn_gen, 5, gen_name+"_1", slice(1e-3))
-do_fit(learn_gen, 5, gen_name+"_2", slice(1e-4))
+do_fit(learn_gen, 3, gen_name+"_1", slice(1e-3))
+do_fit(learn_gen, 3, gen_name+"_2", slice(1e-4))
 
 learn_gen.unfreeze()
 
-do_fit(learn_gen, 5, gen_name+"_3", slice(1e-4), pct_start=1e-3)
+do_fit(learn_gen, 3, gen_name+"_4", slice(1e-3), pct_start=0.001)
