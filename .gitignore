@@ -1,6 +1,8 @@
 wandb/
 data/
 dataset/
+output_imgs/
+videos/
 logs/
 models/
 .vscode/
