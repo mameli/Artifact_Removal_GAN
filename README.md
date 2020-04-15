@@ -20,7 +20,7 @@ We used [MobileNet](https://github.com/rwightman/gen-efficientnet-pytorch) as th
 
 The metrics used are:
 
-- [SSIM]([https://link](https://github.com/jorge-pessoa/pytorch-msssim))
+- [SSIM](https://github.com/jorge-pessoa/pytorch-msssim)
 - [LPIPS](https://github.com/richzhang/PerceptualSimilarity)
 - [BRISQUE](https://github.com/bukalapak/pybrisque)
 - [NIQE](http://www.scikit-video.org/stable/modules/generated/skvideo.measure.niqe.html#skvideo.measure.niqe)
@@ -29,16 +29,6 @@ The metrics used are:
 
 ---
 ## Results
-
-<style>
-figure{
-    display: inline-block;
-    width: 33%;
-    margin: 0;
-    text-align: center;
-    padding: 0;
-}
-</style>
 
 ### Original:
 ![original](./imgs/0803_base.jpg)
@@ -49,15 +39,16 @@ figure{
 <p style="padding-bottom: 1cm;"/>
 
 ### Crop
-
-<figure style= "width: 45%;">
-    <img src="./imgs/0803_base_Crop.png" alt='JPEG quality=20' style="width:100%"/>
-    <figcaption>JPEG quality=20</figcaption>
-</figure>
-<figure style= "width: 45%;">
-    <img src="./imgs/0803_GAN_Crop.png" alt='GAN' style="width:100%"/>
-    <figcaption>GAN</figcaption>
-</figure>
+<table>
+  <tr>
+      <td><b>JPEG</b></td>
+     <td><b>GAN</b></td>
+  </tr>
+  <tr>
+    <td><img src="./imgs/0803_base_Crop.png" width=500px ></td>
+    <td><img src="./imgs/0803_GAN_Crop.png" width=500px ></td>
+  </tr>
+ </table>
 
 
 ### Original:
@@ -68,30 +59,32 @@ figure{
 
 <p style="padding-bottom: 1cm;"/>
 
-<figure style= "width: 49.5%;">
-    <img src="./imgs/0416_base_Crop.png" alt='JPEG quality=20' style="width:100%"/>
-    <figcaption>JPEG quality=20</figcaption>
-</figure>
-<figure style= "width: 49.5%;">
-    <img src="./imgs/0416_GAN_Crop.png" alt='GAN' style="width:100%"/>
-    <figcaption>GAN</figcaption>
-</figure>
+<table>
+  <tr>
+      <td><b>JPEG</b></td>
+     <td><b>GAN</b></td>
+  </tr>
+  <tr>
+    <td><img src="./imgs/0416_base_Crop.png" width=500px ></td>
+    <td><img src="./imgs/0416_GAN_Crop.png" width=500px ></td>
+  </tr>
+ </table>
 
 <p style="padding-bottom: 1cm;"/>
 
 ## Comparison to the ground truth
-<figure>
-    <img src="./imgs/0222_HR_Crop.png" alt='High resolution' style="width:100%"/>
-    <figcaption>High resolution</figcaption>
-</figure>
-<figure>
-    <img src="./imgs/0222_base_Crop.png" alt='JPEG quality=20' style="width:100%"/>
-    <figcaption>JPEG quality=20</figcaption>
-</figure>
-<figure>
-    <img src="./imgs/0222_GAN_Crop.png" alt='GAN' style="width:100%"/>
-    <figcaption>GAN</figcaption>
-</figure>
+<table>
+  <tr>
+      <td><b>High resolution</b></td>
+      <td><b>JPEG</b></td>
+     <td><b>GAN</b></td>
+  </tr>
+  <tr>
+    <td><img src="./imgs/0222_HR_Crop.png" width=500px ></td>
+    <td><img src="./imgs/0222_base_Crop.png" width=500px ></td>
+    <td><img src="./imgs/0222_GAN_Crop.png" width=500px ></td>
+  </tr>
+ </table>
 
 
 
