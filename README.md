@@ -85,7 +85,10 @@ The metrics used are:
     <td><img src="./imgs/0222_GAN_Crop.png" width=500px ></td>
   </tr>
  </table>
+ 
+ ## Video Demo
 
+[![Video demo gan youtube](https://img.youtube.com/vi/s-i80r_qXDI/0.jpg)](https://www.youtube.com/watch?v=s-i80r_qXDI)
 
 
    
