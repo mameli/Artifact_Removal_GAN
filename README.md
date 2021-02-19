@@ -9,6 +9,8 @@ To train the model we use the NoGAN technique. Thanks this method, the training 
     
 The key feature of the development of the model is the usage of the perceptual loss function: Learned Perceptual Image Patch Similarity (LPIPS).  This function was created to mimic human vision judgements and it is used to measure the similarity between two images.
 
+For more details: [ACM publication](https://dl.acm.org/doi/abs/10.1145/3394171.3414451)
+
 ---
 ## Architecture
 
