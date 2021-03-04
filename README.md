@@ -28,6 +28,12 @@ The metrics used are:
 - [NIQE](http://www.scikit-video.org/stable/modules/generated/skvideo.measure.niqe.html#skvideo.measure.niqe)
 
 
+## Installation
+
+conda env create --file environment.yml
+conda activate arnet_env
+
+create_images.ipynb to test
 
 ---
 ## Results
