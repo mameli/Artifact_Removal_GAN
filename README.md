@@ -30,8 +30,10 @@ The metrics used are:
 
 ## Installation
 
+```
 conda env create --file environment.yml
 conda activate arnet_env
+```
 
 create_images.ipynb to test
 
