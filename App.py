@@ -10,8 +10,8 @@ torch.backends.cudnn.benchmark=True
 
 app = Flask(__name__)
 
-root_model_path = Path("/data/students_home/fmameli/repos/Artifact_Removal_GAN/models/")
-exported_model = Path("/data/students_home/fmameli/repos/Artifact_Removal_GAN/models/standard.pkl")
+root_model_path = Path("./models/")
+exported_model = Path("standard.pkl")
 learner = load_learner(path=root_model_path, file=exported_model)
 
 print("learner loaded")
