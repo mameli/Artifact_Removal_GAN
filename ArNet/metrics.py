@@ -4,7 +4,7 @@ from brisque import BRISQUE
 from skvideo.measure.niqe import niqe
 from .ssim import ssim
 
-import perceptual_similarity as lpips
+import lpips
 
 
 class SSIM_Metric_gen(Callback):
@@ -43,8 +43,7 @@ class LPIPS_Metric_gen(Callback):
     def __init__(self):
         super().__init__()
         self.name = "lpips_gen"
-        self.model = lpips.PerceptualLoss(
-            model='net-lin', net='alex', use_gpu=True, gpu_ids=[0])
+        self.model = lpips.LPIPS(net='alex', spatial=True)
 
     def on_epoch_begin(self, **kwargs):
         self.values = []
@@ -62,8 +61,7 @@ class LPIPS_Metric_input(Callback):
         super().__init__()
         self.name = "lpips_in"
         self.final_score = 0.
-        self.model = lpips.PerceptualLoss(
-            model='net-lin', net='alex', use_gpu=True, gpu_ids=[0])
+        self.model = lpips.LPIPS(net='alex', spatial=True)
 
     def on_epoch_begin(self, **kwargs):
         self.values = []
